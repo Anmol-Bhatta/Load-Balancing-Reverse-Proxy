@@ -1,0 +1,158 @@
+This repository contains a self-implemented load balancing system centered around a reverse proxy, designed to distribute HTTP requests across multiple application servers.
+
+---
+
+# Load Balancing with a Reverse Proxy
+
+### **Project Overview**
+
+This project involves creating a load balancing system using a reverse proxy. The system balances incoming requests across multiple application servers, enhancing scalability and availability.
+
+### **Contributions**
+
+- **Load Balancing Algorithms and Implementation**  
+  Implemented the following algorithms:
+  1. Weighted Round Robin
+  2. Least Connections
+  3. Geolocation Global
+  4. Weighted Fault Avoidance
+
+- **Infrastructure Setup**  
+  Configured and launched 5 application servers across different AWS regions, with web services implemented on each.
+
+- **Database and Central Server Configuration**  
+  Established a central database for logging and cache data, and set up a central server with a reverse proxy.
+
+- **Project Management**  
+  Handled project planning, timeline management, and complete backend deployment.
+
+---
+
+### **Project Goals**
+
+- **Objective**  
+  Implement a self-built load balancing system around a reverse proxy that routes requests to different application servers running identical business logic.
+
+- **Audience**  
+  - **Developers**: Benefit from scalable web services.
+  - **End Users**: Experience enhanced availability of services under high demand.
+
+---
+
+### **Technical Approach**
+
+#### Architecture Design and Workflow
+
+The architecture is based on AWS EC2 instances with a central server acting as a reverse proxy to manage load balancing across application servers in various regions.
+
+**Components:**
+1. **Frontend Website**: User interface for testing load balancing, created by Malek Rekik.
+2. **Central Server**: Hosts the reverse proxy on an AWS EC2 instance.
+3. **Application Servers**: 5 AWS EC2 instances across the US, each hosting the application server code.
+4. **Central Database**: AWS RDS instance for caching and log storage.
+5. **Monitoring Program**: Tracks application server statuses, updating every 60 seconds.
+
+**Workflow**  
+1. **Request Handling**: The reverse proxy intercepts HTTP requests, consults cache data, and uses a load balancing algorithm to forward the request to an application server.
+2. **Response Processing**: The central server logs and forwards responses from the application servers to the clients.
+3. **System Reset**: A dedicated sub-path enables coordinated resets of load balancing and server capacities as per tester inputs.
+
+---
+
+### **Implementation and Testing**
+
+- **Platform and Tools**  
+  - **Languages/Framework**: C# in .NET Core 6, developed with Visual Studio 2022.
+  - **Database**: MSSQL on AWS RDS (db.t2.micro, 20 GB storage).
+  - **Web Hosting**: Hosted on IIS (Windows EC2 instances) and Apache (Elastic Beanstalk for Linux AMI).
+
+- **File Structure**  
+  - Reverse Proxy Middleware: `src/CloudSharpLimitedCentral/CustomMiddleWares/ReverseProxyMiddleware.cs`
+  - Application Server: `src/CloudSharpSystemsWeb/Controllers/TestController.cs`
+  - Central Database: `src/appdatabasemain`
+  - Monitoring Program: `src/IPMonitoringTask/MonitorRunner.cs`
+
+- **Testing Methodology**  
+  1. **Basic Tests**: Send batches of requests to observe load balancing across servers.
+  2. **Distributed Testing**: APImetrics used to simulate global clients (AWS, Google, Azure).
+  3. **User Testing**: Conducted by testers from multiple locations to evaluate algorithm performance under various configurations.
+
+- **Results and Comparisons**  
+  - **No Load Balancing vs. Least Connections**: Without load balancing, the server overloads and fails to process all requests, whereas load balancing distributes the load efficiently.
+  - **Weighted Round Robin**: Shows issues when request sizes vary significantly. Larger requests result in behavior similar to standard Round Robin, while smaller requests could overload a single server if it fails.
+
+---
+
+### **Improvements**
+
+1. **Weighted Fault Avoidance vs. Round Robin**: Weighted Fault Avoidance proved more reliable by avoiding faulty servers and maintaining higher successful connection rates.
+
+---
+
+### **User Manual**
+
+**Grader Guides**
+
+1. **Project Components**  
+   - Reverse Proxy Source Code: `src\CloudSharpLimitedCentral\CustomMiddleWares\ReverseProxyMiddleware.cs`
+   - Test Data and Central Server IP: `3.132.169.204` (Ohio)
+   - Application Server IPs:
+     - Ohio (x2): `18.219.83.16` and `18.188.43.229`
+     - Virginia: `34.226.116.31`
+     - Oregon: `44.228.224.21`
+     - California: `52.9.248.128`
+
+2. **Algorithm Testing**  
+   Interface URL for testing: [http://3.22.167.51/](http://3.22.167.51/)  
+   Load Balancing Pseudocode: Refer to `Pseudo Code for Load Balancing Algorithms.pdf`
+
+3. **References**  
+   - Reverse Proxy Middleware template adapted from [Auth0 Blog](https://auth0.com/blog/building-a-reverse-proxy-in-dot-net-core/).
+
+---
+
+### **Testing Guide**
+
+1. **Access Testing Interface**  
+   Visit [http://3.22.167.51/](http://3.22.167.51/) to select a load balancing algorithm, configure batch size, and set server error rates.
+
+2. **Reset System**  
+   Reset load balancing algorithms and server capacities using a JavaScript console or by clicking "Reset" on the interface.
+
+   ```javascript
+   fetch("http://ec2-3-132-169-204.us-east-2.compute.amazonaws.com/test/reset_session_resources", {
+       method: 'POST',
+       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+       body: JSON.stringify({
+           load_balancing_algorithm: "WEIGHTED_ROUND_ROBIN",
+           server_capacities: [
+               { server_host_ip: "18.219.83.16", capacity: 2300, preset_error_rate: 0.0 },
+               { server_host_ip: "34.226.116.31", capacity: 7800, preset_error_rate: 0.5 },
+               ...
+           ]
+       })
+   });
+   ```
+
+3. **Data Collection**  
+   Use the "Get Data" button to retrieve server processing results, including IP, status, and processing delay.
+
+---
+
+### **Debugging Guide**
+
+**Setup Requirements**  
+1. **Visual Studio 2022**: Required to open the `CloudSharpSystemsWeb` solution.
+2. **IIS and .NET 6 Hosting Bundle**: Install on target machines for application and central server hosting.
+
+**Central Server Setup**  
+1. Publish `CloudSharpLimitedCentral` to a target folder.
+2. Configure an IIS website with the published files and test via the endpoint `<Central Server IP>/WeatherForecast`.
+
+**Application Server Setup**  
+1. Publish `CloudSharpLimitedCentral`.
+2. Register the server IP with the central database admin.
+3. Test the setup by accessing `<Application Server IP>/test/test_get_monitor_signal`.
+
+---
+
